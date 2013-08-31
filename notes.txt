@@ -1,0 +1,18 @@
+Graphable.py
+
+An application for logging and visualising data.
+
+Class:
+	Dataset
+		Name, comments
+		Some config data # start time? step? max vals? choice of units?
+		Values # dictionary, {time:value} 
+		insert() # insert a value
+
+	Graph
+		Copies of multiple datasets?
+
+createDataset(Dataset name, config)
+export(Dataset name) # XML or JSON, do a search for what's best
+import(filename, Dataset name to create)
+createGraph(Dataset, Dataset, Dataset...) # save as .jpg, and open at same time
