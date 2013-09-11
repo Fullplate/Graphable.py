@@ -7,13 +7,8 @@
 # - export dataset to file, import dataset from file
 
 # todo:
-# - gui design including most important features
-# - PyQt tutorial
-
-#notes:
-#possibly just design a nice console-based gui
-#then use turtle graphics to display graphs for simplicity/portability
-
+# - turtle graphics output for prototype
+# - simple CLI
 
 import pickle
 
@@ -24,9 +19,11 @@ class Dataset:
 		self.values = []
 
 	def addValue(self, value):
+		""" Add a data point to the dataset"""
 		self.values.append(value);
 
 	def printDataset(self):
+		""" print dataset for debugging purposes """
 		print(self.name+": "+self.desc)
 		for i in range(0, len(self.values)):
 			print(i, self.values[i])
@@ -40,6 +37,7 @@ class Graph:
 		self.sets.append(set)
 
 def addDataset(dataset):
+	""" create a new dataset with a unique name """ 
 	if isinstance(dataset, Dataset): # is actually a Dataset
 		if dataset.name not in DATA: # has a unique name property	
 			print(dataset.name,"unique, adding")
@@ -50,14 +48,14 @@ def addDataset(dataset):
 		print("! addDataset was not passed a Dataset")
 
 def exportDataset(datasetName): 
-	""" pass a Dataset instance """
+	""" pickle an save a dataset, pass a a dataset object """
 	f = open((datasetName.name+".pkl"), 'wb')
 	pickle.dump(datasetName, f)
 	f.close()
 	print(datasetName.name,"exported")
 
 def importDataset(datasetName):
-	""" pass the name string of a Dataset """
+	""" import a pickled dataset, pass a dataset name string """
 	# checks for existing dataset, overwriting old dataset etc.
 	# check that datasetName and fileName is a string
 	# check that fileName is legit
@@ -67,7 +65,7 @@ def importDataset(datasetName):
 	f.close()	
 
 def createGraph(*args):
-	# write the datasets to a .jpg then display .jpg
+	""" creates a visual representation of a number of passed dataset objects """
 	for set in args:
 		print(set.name)
 
@@ -86,15 +84,6 @@ for i in DATA:
 
 # Graph testing
 #createGraph(test1, test2)
-
-# pickle testing
-#exportDataset(test1, "f.txt") # works
-
-#del test1
-
-#importDataset(test1, "f.txt")
-#print(test1.name)
-
 
 #if __name__ == "__main__":
 #	main()
