@@ -7,13 +7,12 @@
 # - finish error checking/exceptions
 # - do-whiles for input (cleaner code)
 # - make it clearer that you use menu to cancel an operation, or go back to menu
-# - text with turtle graphics? label graph, axis, scale and provide a colour coded legend
-# - screenshot, or save to jpeg feature?
 # - graphs should be handled the same way as datasets - import/export feature, unique names shared
 # - datasets and graphs need to be selectable and editable
 
 import pickle
 import turtle
+import canvasvg
 
 # DATA STRUCTURES
 class Dataset:
@@ -36,10 +35,15 @@ class Graph:
 	def __init__(self, name):
 		self.name = name
 		self.sets = []
+		self.colours = ["red","blue","green","orange","pink"]
+		self.maxSets = len(self.colours)
 
 	def addDataset(self, newDataset):
 		""" add a dataset to the graph """
-		self.sets.append(newDataset)
+		if len(self.sets) < self.maxSets:
+			self.sets.append(newDataset)
+		else:
+			print("! Maximum amount of datasets for graph reached.")
 
 	def display(self):
 		""" view a representation of the graph using turtle graphics """
@@ -47,28 +51,34 @@ class Graph:
 		turt = turtle.Turtle()
 		win = turtle.Screen()
 		turt.speed(10)
+		turt.shape("arrow")
 
-		# draw graph axis in default colour (black)
+		# draw graph axis and labels in default colour (black), then the legend
+		turt.width(2)
 		self.displayAxis(turt)
-
-		# each dataset is drawn in a separate colour for visibility
-		colours = ["red","blue","green","pink","orange","purple"]
-		currColour = 0
-		turt.color(colours[currColour])		
+		self.displayLabels(turt)
+		turt.width(5)
+		self.displayLegend(turt)		
 		
-		# draw each dataset
+		currIndex = 0 # use to rotate through colours
+		turt.color(self.colours[currIndex])
+		turt.width(3)
+
+		# draw each dataset in a different colour
 		for dataset in self.sets:
 			self.displayDataset(turt, dataset)
-			# rotate colour
-			currColour += 1
-			if currColour == len(colours):
-				currColour = 0
-			turt.color(colours[currColour])
+			if (currIndex < 4):
+				currIndex += 1
+			turt.color(self.colours[currIndex])
+
+		turt.color("black")
+
+		canvasvg.saveall(self.name+".svg", win._canvas)
 
 		win.exitonclick()
 
 	def displayAxis(self, t):
-		""" turtle graphics: display the x and y axis and labels """
+		""" display the x and y axis  """
 		# note: hardcoded to a 500x500 set of axis, origin at -250,-250
 		t.pu()
 		t.setpos(-250,-250)
@@ -79,12 +89,30 @@ class Graph:
 		t.pd()
 		t.setpos(250, -250)
 
+	def displayLabels(self, t):
+		""" display the title and axis labels """
+		t.pu()
+		t.setpos(-270, 260)
+		t.pd()
+		t.write("VALUE", font=('Arial', 12, 'normal'))
+		t.pu()
+		t.setpos(270, -255)
+		t.pd()
+		t.write("TIME", font=('Arial', 12, 'normal'))
+		t.pu()
+		t.setpos(-250, 340)
+		t.pd()
+		t.write(self.name, font=('Arial', 30, 'normal'))
+
 	def displayDataset(self, t, dataset):
 		""" draw a dataset on the axis - unoptimised for readability """
 		# some setup
 		numPoints = len(dataset.values)
-		pointScale = 500 / 10 # 10 being the current highest possible val
-		timeScale = 500 / (numPoints - 1) # because starts on the axis
+		pointScale = 500 / 10 # 10 being the current highest possible val7		
+		if numPoints == 1:
+			timeScale = 500
+		else:
+			timeScale = 500 / (numPoints - 1) # because starts on the axis
 
 		# generate coordinates from points
 		coords = []
@@ -99,6 +127,34 @@ class Graph:
 		t.pd()
 		for i in range(1, numPoints):
 			t.setpos(coords[i][0], coords[i][1])
+
+		# hack for single valued datasets
+		if numPoints == 1:
+			for i in range(-250, 250, 10):				
+				t.pu()
+				t.setpos(i, -250 + dataset.values[0] * pointScale)
+				t.pd()
+				t.dot(3)
+
+	def displayLegend(self, t):
+		""" display the legends for each dataset """
+		# for each dataset, draw a horizontal line below the graph in the matching colour
+		# then write the dataset name next to that line
+		lineY = -280 # starting y position for the legend
+		lineX = [-250, -185, -170] # start of line, end of line, start of text
+
+		for i in range(0, len(self.sets)):
+			t.color(self.colours[i])
+			currY = lineY - i * 25
+			t.pu()
+			t.setpos(lineX[0], currY)
+			t.pd()
+			t.setpos(lineX[1], currY)
+			t.pu()
+			t.setpos(lineX[2], currY - 8)
+			t.pd()
+			t.color("black")
+			t.write(self.sets[i].name, font=('Arial', 12, 'normal'))
 
 	def printGraph(self):
 		""" print graph for debugging purposes """
