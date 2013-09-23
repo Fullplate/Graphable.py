@@ -1,14 +1,7 @@
 # Graphable.py
-# 'An application for logging and visualising data'
-# Written for Python 3, with a simple CLI and turtle graphics
+# An application for logging and graphing data.
+# Written for Python 3
 # Michael Harmer, 2013
-
-# basic functionality complete!
-# - finish error checking/exceptions
-# - do-whiles for input (cleaner code)
-# - make it clearer that you use menu to cancel an operation, or go back to menu
-# - graphs should be handled the same way as datasets - import/export feature, unique names shared
-# - datasets and graphs need to be selectable and editable
 
 import pickle
 import turtle
@@ -37,16 +30,25 @@ class Graph:
 		self.sets = []
 		self.colours = ["red","blue","green","orange","pink"]
 		self.maxSets = len(self.colours)
+		self.globwin = None
 
 	def addDataset(self, newDataset):
 		""" add a dataset to the graph """
 		if len(self.sets) < self.maxSets:
+
 			self.sets.append(newDataset)
+			print("Added \'"+newDataset.name+"\'. "+str(len(self.sets))+"/" \
+				+str(self.maxSets)+" datasets allocated.")
 		else:
 			print("! Maximum amount of datasets for graph reached.")
 
 	def display(self):
 		""" view a representation of the graph using turtle graphics """
+
+		if len(self.sets) == 0:
+			print("! Graph contains no datasets.")
+			return
+
 		# setup
 		turt = turtle.Turtle()
 		win = turtle.Screen()
@@ -58,7 +60,7 @@ class Graph:
 		self.displayAxis(turt)
 		self.displayLabels(turt)
 		turt.width(5)
-		self.displayLegend(turt)		
+		self.displayLegend(turt)
 		
 		currIndex = 0 # use to rotate through colours
 		turt.color(self.colours[currIndex])
@@ -71,11 +73,13 @@ class Graph:
 				currIndex += 1
 			turt.color(self.colours[currIndex])
 
-		turt.color("black")
+		turt.color("black")		
+		self.displaySaveButton(turt)
+		turt.pu()
+		turt.setpos(-270, 360) # place arrow in a nice location
 
-		canvasvg.saveall(self.name+".svg", win._canvas)
-
-		win.exitonclick()
+		self.globwin = win # set class-wide handle for the click handler function
+		win.onclick(self.handleClick)
 
 	def displayAxis(self, t):
 		""" display the x and y axis  """
@@ -102,7 +106,7 @@ class Graph:
 		t.pu()
 		t.setpos(-250, 340)
 		t.pd()
-		t.write(self.name, font=('Arial', 30, 'normal'))
+		t.write(self.name, font=('Arial', 24, 'normal'))
 
 	def displayDataset(self, t, dataset):
 		""" draw a dataset on the axis - unoptimised for readability """
@@ -156,6 +160,26 @@ class Graph:
 			t.color("black")
 			t.write(self.sets[i].name, font=('Arial', 12, 'normal'))
 
+	def displaySaveButton(self, t):
+		""" display the save button """
+		t.pu()
+		t.setpos(150, 340)
+		t.pd()
+		t.setpos(150, 380)
+		t.setpos(300, 380)
+		t.setpos(300, 340)
+		t.setpos(150, 340)
+		t.pu()
+		t.setpos(161, 345)
+		t.pd()
+		t.write("SAVE .SVG", font=('Arial', 18, 'normal'))
+
+	def handleClick(self, x, y):
+		""" determine if button was clicked on, if so save canvas to .svg """
+		if x >= 150 and x <= 300 and y >= 340 and y <= 380:
+			canvasvg.saveall(self.name+".svg", self.globwin._canvas)
+			print("Graph saved to .svg file! Check the Graphable directory.")
+
 	def printGraph(self):
 		""" print graph for debugging purposes """
 		print("Graph:",self.name)
@@ -167,108 +191,94 @@ def addDataset(dataset):
 	""" create a new dataset with a unique name """ 
 	if isinstance(dataset, Dataset): # is actually a Dataset
 		if dataset.name not in DATA: # has a unique name property	
-			print(dataset.name,"unique, adding")
+			print("\'"+dataset.name+"\' unique, adding.")
 			DATA[dataset.name] = dataset
 		else:
-			print("!",dataset.name,"not unique, did not add")
+			print("! \'"+dataset.name+"\' not unique, did not add.")
 	else:
-		print("! addDataset was not passed a Dataset")
+		print("! addDataset was not passed a Dataset.")
 
 def exportDataset(datasetName): 
-	""" pickle an save a dataset, pass a a dataset name string """
+	""" pickle an save a dataset, pass a dataset name string """
 	f = open((datasetName+".pkl"), 'wb')
-	gotInstance = False
-	for i in DATA:
-		if DATA[i].name == datasetName:
-			instance = DATA[i]
-			gotInstance = True
 
-	if gotInstance:
-		pickle.dump(instance, f)
-		f.close()
-		print(datasetName,"exported")
+	if datasetName in DATA:
+		pickle.dump(DATA[datasetName], f)
+		print("\'"+datasetName+"\' exported.")
 	else:
-		print("! dataset does not exist")
+		print("! \'"+datasetName+"\' does not exist.")
+	f.close()
 
 def importDataset(datasetName):
 	""" import a pickled dataset, pass a dataset name string """
-	# checks for existing dataset, overwriting old dataset etc.
-	# check that datasetName and fileName is a string
-	# check that fileName is legit
-	f = open((datasetName+".pkl"), 'rb')
-	print("Importing dataset...")
+	f = open((datasetName+".pkl"), 'rb')	
 	addDataset(pickle.load(f))
-	f.close()	
+	f.close()
 
-def createGraph(*args):
-	""" creates a visual representation of a number of passed dataset objects """
-	for set in args:
-		print(set.name)
-
-# DEV FUNCTIONS
-def testAll():
-	print()
-	# Dataset testing
-	#addDataset(Dataset("test1", "test dataset"))
-
-	#exportDataset(DATA["test1"])
-	#del DATA["test1"]
-	#importDataset("test1")
-
-	#for i in DATA:
-	#	DATA[i].printDataset()
-
-	# Graph testing
-	#createGraph(test1, test2)
-
-def debug():
-	print("...\nDatasets:")
-	for i in DATA:
-		DATA[i].printDataset()
-
-# DATA holds Dataset instances
+# DATA holds Dataset instances, mapping dataset name:instance
 DATA = {}
-# GRAPHS holds Graph instances
-GRAPHS = {}
 
-# Program entry
+# PROGRAM ENTRY
 def main():
 	print("\_/* Graphable *\\_/")
-	print("commmands: help, menu, mkd, mkg, import, export, quit")
+	print("commmands: help, menu, dataset, graph, import, export, quit")
 
-	# Input loop
-	inp = input("> ")
+	# Main input loop
+	inp = input("menu > ")
 	while inp != "quit":
 		if inp == "help":
-			print("menu - return to main menu\nmkd, mkg - make dataset and graph")
-			print("import, export - save and load dataset to/from file")
+			print("menu - return to main menu at any point")
+			print("dataset - create or select an existing dataset")
+			print("graph - create a new graph")
+			print("import, export - save/load datasets. Warning: overwrites.")
 
-		# Dialog for creating a dataset and adding data points
-		elif inp == "mkd":
-			inp = input("Dataset name: ")
+		# Dialog for creating or selecting a dataset and adding data points
+		elif inp == "dataset":
+			inp = input("Dataset name (new or existing) > ")
+			newPoints = []
 			if inp != "menu":
-				new = Dataset(inp,"")
-				
-				inp = input("Enter 1-10 to add a data point: ")
-				while inp != "menu":
-					numericInp = int(inp)
-					if (numericInp in range(1, 11)):
-						new.addValue(numericInp)
-						print("Data point added.")
-					inp = input("Enter 1-10 to add a data point: ")
-				addDataset(new)
+				name = inp	
+				found = False			
+				# check if it's an existing dataset
+				if name in DATA:
+					found = True
+					instance = name
 
+				# get data points
+				inp = input("1-10 to add data, menu to finish > ")
+				while inp != "menu":
+					try:
+						numericInp = int(inp) # will throw exception if non-numeric
+						if numericInp in range(1, 11):
+							newPoints.append(numericInp)
+							print("Data point added.")
+						else:
+							raise Exception() # manually raise exception if out of accepted range
+					except:
+						print("Invalid input.")
+					inp = input("1-10 to add data, menu to finish > ")
+
+				# user is done adding points
+				if (found): # add points to the existing dataset
+					for p in newPoints:
+						DATA[name].addValue(p)
+					print("Dataset \'"+name+"\' updated.")
+				else: # create a new dataset and add points to it, then add it
+					new = Dataset(name,"")
+					for p in newPoints:
+						new.addValue(p)
+					addDataset(new)
 
 		# Dialogue for creating a graph, adding datasets to it and displaying it
-		elif inp == "mkg":
-			inp = input("Enter graph name: ")
+		elif inp == "graph":
+			inp = input("Enter graph name > ")
 			if inp != "menu":
 				new = Graph(inp)
-				inp = input("Enter dataset to add, or type display: ")
+				inp = input("Enter dataset name to add, then \'display\' > ")
 				while inp != "menu":
 					if inp == "display":
 						new.display()
-					else: # locate dataset and add to graph
+					else: # locate dataset and add to graph -0 change to dict method
 						gotInstance = False
 						for i in DATA:
 							if DATA[i].name == inp:
@@ -277,26 +287,26 @@ def main():
 						if gotInstance:
 							new.addDataset(instance)
 						else:
-							print("! dataset does not exist")						
-					inp = input("Enter dataset to add, or type display: ")	
+							print("! dataset does not exist.")						
+					inp = input("Enter dataset name to add, then \'display\' > ")	
 
 		# Dialogue for pickling to file
 		elif inp == "export":
-			inp = input("Enter dataset name to export: ")
+			inp = input("Enter dataset name to export > ")
 			if inp != "menu":
 				exportDataset(inp)
 
 		# Dialogue for unpickling
 		elif inp == "import":
-			inp = input("Enter dataset name to import: ")
+			inp = input("Enter dataset name to import > ")
 			if inp != "menu":
 				importDataset(inp)
 
-		# Misc
-		elif inp == "debug":
-			debug()
+		elif inp != "menu":
+			print("Command not recognized.")
 
-		inp = input("> ")	
+		print("commmands: help, menu, dataset, graph, import, export, quit")
+		inp = input("menu > ")	
 
 if __name__ == "__main__":
 	main()

@@ -63,7 +63,7 @@ def convert(document, canvas, items=None, tounicode=None):
 		# skip unsupported items
 		itemtype = canvas.type(item)
 		if itemtype not in supported_item_types:
-			warn("Items of type '%s' are not supported." % itemtype)
+			#warn("Items of type '%s' are not supported." % itemtype)
 			continue
 
 		# get item coords
