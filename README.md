@@ -1,8 +1,6 @@
 Graphable.py
 ============
 
----
-
 An application for logging and graphing data.
 Written for Python 3, by Michael Harmer.
 
